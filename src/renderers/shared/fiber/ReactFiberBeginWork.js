@@ -16,6 +16,7 @@ import type { ReactCoroutine } from 'ReactCoroutine';
 import type { Fiber } from 'ReactFiber';
 import type { HostConfig } from 'ReactFiberReconciler';
 import type { PriorityLevel } from 'ReactPriorityLevel';
+import ReactCurrentOwner from 'ReactCurrentOwner';
 
 var {
   mountChildFibersInPlace,
@@ -151,7 +152,13 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>, s
       }
     }
 
-    var nextChildren = fn(props);
+    if (__DEV__) {
+      ReactCurrentOwner.current = workInProgress;
+      var nextChildren = fn(props);
+      ReactCurrentOwner.current = null;
+    } else {
+      var nextChildren = fn(props);
+    }
     reconcileChildren(current, workInProgress, nextChildren);
     return workInProgress.child;
   }
@@ -176,7 +183,9 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>, s
     }
     // Rerender
     const instance = workInProgress.stateNode;
+    ReactCurrentOwner.current = workInProgress;
     const nextChildren = instance.render();
+    ReactCurrentOwner.current = null;
     reconcileChildren(current, workInProgress, nextChildren);
     return workInProgress.child;
   }
@@ -237,13 +246,23 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>, s
     }
     var fn = workInProgress.type;
     var props = workInProgress.pendingProps;
-    var value = fn(props);
+
+    if (__DEV__) {
+      ReactCurrentOwner.current = workInProgress;
+      var value = fn(props);
+      ReactCurrentOwner.current = null;
+    } else {
+      var value = fn(props);
+    }
+
     if (typeof value === 'object' && value && typeof value.render === 'function') {
       // Proceed under the assumption that this is a class instance
       workInProgress.tag = ClassComponent;
       adoptClassInstance(workInProgress, value);
       mountClassInstance(workInProgress);
+      ReactCurrentOwner.current = workInProgress;
       value = value.render();
+      ReactCurrentOwner.current = null;
     } else {
       // Proceed under the assumption that this is a functional component
       workInProgress.tag = FunctionalComponent;

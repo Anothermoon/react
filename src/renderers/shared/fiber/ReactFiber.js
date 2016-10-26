@@ -327,4 +327,3 @@ exports.createFiberFromYield = function(yieldNode : ReactYield, priorityLevel : 
   fiber.pendingProps = {};
   return fiber;
 };
-
